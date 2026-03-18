@@ -1,11 +1,5 @@
 modules = ["nodejs-24"]
 
-[[artifacts]]
-id = "artifacts/api-server"
-
-[[artifacts]]
-id = "artifacts/mockup-sandbox"
-
 [deployment]
 deploymentTarget = "autoscale"
 run = ["sh", "-c", "cd transcript-insights-api && node index.js"]
