@@ -77,18 +77,22 @@ app.post('/transcribe', upload.single('audio'), async (req, res) => {
     return res.status(400).json({ error: 'No audio file provided' })
   }
 
-  const filePath = req.file.path
+  const mimeType = (req.file.mimetype || 'audio/webm').split(';')[0]
+  const ext = req.file.originalname.split('.').pop()
+    || (mimeType.includes('mp4') ? 'mp4' : 'webm')
+  const newPath = `${req.file.path}.${ext}`
+  fs.renameSync(req.file.path, newPath)
 
   try {
     const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(filePath),
+      file: fs.createReadStream(newPath),
       model: 'whisper-1',
     })
     res.json({ transcript: transcription.text })
   } catch (err) {
     res.status(500).json({ error: err.message || 'Transcription failed' })
   } finally {
-    fs.unlink(filePath, () => {})
+    fs.unlink(newPath, () => {})
   }
 })
 
@@ -130,11 +134,15 @@ app.post('/process-audio', upload.single('audio'), async (req, res) => {
     return res.status(400).json({ error: 'No audio file provided' })
   }
 
-  const filePath = req.file.path
+  const mimeType = (req.file.mimetype || 'audio/webm').split(';')[0]
+  const ext = req.file.originalname.split('.').pop()
+    || (mimeType.includes('mp4') ? 'mp4' : 'webm')
+  const newPath = `${req.file.path}.${ext}`
+  fs.renameSync(req.file.path, newPath)
 
   try {
     const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(filePath),
+      file: fs.createReadStream(newPath),
       model: 'whisper-1',
     })
 
@@ -161,7 +169,7 @@ app.post('/process-audio', upload.single('audio'), async (req, res) => {
     }
     res.status(500).json({ error: err.message || 'Processing failed' })
   } finally {
-    fs.unlink(filePath, () => {})
+    fs.unlink(newPath, () => {})
   }
 })
 
