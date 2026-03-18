@@ -37,6 +37,9 @@ Return ONLY a valid JSON object. No preamble, no explanation. No markdown code f
   "notes": "string or null"
 }`;
 
+const stripCodeFences = (text: string): string =>
+  text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+
 const router: IRouter = Router();
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -63,7 +66,7 @@ router.post("/analyse", async (req, res) => {
       return;
     }
 
-    const parsed = JSON.parse(content.text);
+    const parsed = JSON.parse(stripCodeFences(content.text));
     res.json(parsed);
   } catch (err) {
     if (err instanceof SyntaxError) {

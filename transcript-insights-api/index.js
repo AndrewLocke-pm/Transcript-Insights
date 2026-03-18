@@ -9,6 +9,9 @@ import 'dotenv/config'
 if (!process.env.OPENAI_API_KEY) console.error('MISSING: OPENAI_API_KEY')
 if (!process.env.ANTHROPIC_API_KEY) console.error('MISSING: ANTHROPIC_API_KEY')
 
+const stripCodeFences = (text) =>
+  text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+
 const app = express()
 const upload = multer({ dest: 'uploads/', limits: { fileSize: 25 * 1024 * 1024 } })
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -100,7 +103,7 @@ app.post('/analyse', async (req, res) => {
       return res.status(500).json({ error: 'Unexpected response type from Claude' })
     }
 
-    const parsed = JSON.parse(content.text)
+    const parsed = JSON.parse(stripCodeFences(content.text))
     res.json(parsed)
   } catch (err) {
     if (err instanceof SyntaxError) {
@@ -138,7 +141,7 @@ app.post('/process-audio', upload.single('audio'), async (req, res) => {
       return res.status(500).json({ error: 'Unexpected response type from Claude' })
     }
 
-    const insights = JSON.parse(content.text)
+    const insights = JSON.parse(stripCodeFences(content.text))
     res.json({ transcript, insights })
   } catch (err) {
     if (err instanceof SyntaxError) {

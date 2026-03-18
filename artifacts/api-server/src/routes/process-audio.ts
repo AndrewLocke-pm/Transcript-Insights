@@ -40,6 +40,9 @@ Return ONLY a valid JSON object. No preamble, no explanation. No markdown code f
   "notes": "string or null"
 }`;
 
+const stripCodeFences = (text: string): string =>
+  text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+
 const router: IRouter = Router();
 
 const upload = multer({
@@ -79,7 +82,7 @@ router.post("/process-audio", upload.single("audio"), async (req, res) => {
       return;
     }
 
-    const insights = JSON.parse(content.text);
+    const insights = JSON.parse(stripCodeFences(content.text));
     res.json({ transcript, insights });
   } catch (err) {
     if (err instanceof SyntaxError) {
