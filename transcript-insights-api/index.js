@@ -6,6 +6,9 @@ import Anthropic from '@anthropic-ai/sdk'
 import fs from 'fs'
 import 'dotenv/config'
 
+if (!process.env.OPENAI_API_KEY) console.error('MISSING: OPENAI_API_KEY')
+if (!process.env.ANTHROPIC_API_KEY) console.error('MISSING: ANTHROPIC_API_KEY')
+
 const app = express()
 const upload = multer({ dest: 'uploads/', limits: { fileSize: 25 * 1024 * 1024 } })
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -86,7 +89,7 @@ app.post('/analyse', async (req, res) => {
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: transcript }],
@@ -124,7 +127,7 @@ app.post('/process-audio', upload.single('audio'), async (req, res) => {
     const transcript = transcription.text
 
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: transcript }],
