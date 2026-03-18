@@ -29,7 +29,7 @@ args = "cd transcript-insights-api && PORT=3001 node index.js"
 waitForPort = 3001
 
 [agent]
-stack = "PNPM_WORKSPACE"
+stack = "nodejs"
 expertMode = true
 
 [postMerge]
@@ -40,5 +40,5 @@ timeoutMs = 20000
 channel = "stable-25_05"
 
 [[ports]]
-localPort = 5173
+localPort = 8080
 externalPort = 80
