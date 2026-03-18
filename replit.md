@@ -48,6 +48,17 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 - `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
 - `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
 
+## API Endpoints (transcript-insights-api)
+
+All endpoints are mounted under `/api`:
+
+- `GET /api/health` — Returns `{ status: "ok" }`
+- `POST /api/transcribe` — Accepts multipart/form-data with field `audio` (max 25MB). Sends to OpenAI Whisper (`whisper-1`). Returns `{ transcript: string }`.
+- `POST /api/analyse` — Accepts JSON `{ transcript: string }`. Sends to Anthropic Claude (`claude-sonnet-4-5`, max_tokens 2000) with a product intelligence system prompt. Returns parsed JSON insights object.
+- `POST /api/process-audio` — Accepts multipart/form-data with field `audio`. Chains transcription then analysis. Returns `{ transcript: string, insights: object }`.
+
+Requires env secrets: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`.
+
 ## Packages
 
 ### `artifacts/api-server` (`@workspace/api-server`)
