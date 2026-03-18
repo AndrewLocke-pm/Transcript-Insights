@@ -9,8 +9,14 @@ import 'dotenv/config'
 if (!process.env.OPENAI_API_KEY) console.error('MISSING: OPENAI_API_KEY')
 if (!process.env.ANTHROPIC_API_KEY) console.error('MISSING: ANTHROPIC_API_KEY')
 
-const stripCodeFences = (text) =>
-  text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+function extractJSON(text) {
+  const cleaned = text
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim()
+  return JSON.parse(cleaned)
+}
 
 const app = express()
 const upload = multer({ dest: 'uploads/', limits: { fileSize: 25 * 1024 * 1024 } })
@@ -54,7 +60,11 @@ Return ONLY a valid JSON object. No preamble, no explanation. No markdown code f
   ],
   "confidence": "high|medium|low",
   "notes": "string or null"
-}`
+}
+
+CRITICAL: Your entire response must be a single raw JSON object.
+No text before it. No text after it. No markdown. No code fences.
+Start your response with { and end with }. Nothing else.`
 
 // GET /health
 app.get('/health', (_req, res) => {
@@ -103,7 +113,8 @@ app.post('/analyse', async (req, res) => {
       return res.status(500).json({ error: 'Unexpected response type from Claude' })
     }
 
-    const parsed = JSON.parse(stripCodeFences(content.text))
+    console.log('Claude raw:', content.text)
+    const parsed = extractJSON(content.text)
     res.json(parsed)
   } catch (err) {
     if (err instanceof SyntaxError) {
@@ -141,7 +152,8 @@ app.post('/process-audio', upload.single('audio'), async (req, res) => {
       return res.status(500).json({ error: 'Unexpected response type from Claude' })
     }
 
-    const insights = JSON.parse(stripCodeFences(content.text))
+    console.log('Claude raw:', content.text)
+    const insights = extractJSON(content.text)
     res.json({ transcript, insights })
   } catch (err) {
     if (err instanceof SyntaxError) {
