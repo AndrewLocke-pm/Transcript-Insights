@@ -31,13 +31,13 @@ args = "transcript-insights-api"
 name = "transcript-insights-api"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd transcript-insights-api && PORT=3000 npm start"
-waitForPort = 3000
-
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd transcript-insights-api && PORT=3001 node index.js"
+waitForPort = 3001
 
 [agent]
 stack = "PNPM_WORKSPACE"
