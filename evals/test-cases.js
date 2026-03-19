@@ -2,20 +2,13 @@ export const testCases = [
   {
     id: "T1-clean-stakeholder",
     description: "Clean stakeholder review — clear decisions, named owners, explicit risks",
-    transcript: `Sarah (PM): Ok everyone, let's confirm what we agreed. We are moving the launch date to Q3, that's decided.
-Tom (Eng): Confirmed. I'll update the technical roadmap by Friday.
-Sarah: The pricing page also needs updating. Lisa, can you own that?
-Lisa (Marketing): Yes, I'll have it done by end of next week.
-Sarah: Main risks — we're blocked on the payments API from the external vendor. That's high priority.
-Tom: Agreed. I'll chase them today and report back Thursday.
-Sarah: We also heard from users in last week's research that the onboarding flow is too complex and they drop off at step 3.
-Lisa: Yes, three separate users said quote the setup takes way too long unquote.`,
+    transcript: `We have agreed to move the product launch to Q3. Sarah will update the roadmap and pricing page by Friday. John will chase the payments team this week — that's our highest risk, we're blocked on their API. Users have been telling us the onboarding flow is too complex and takes too long to complete.`,
     checks: [
       { name: "Has at least 1 decision", fn: r => r.decisions?.length >= 1 },
       { name: "Decision mentions Q3", fn: r => r.decisions?.some(d => d.decision?.toLowerCase().includes('q3')) },
       { name: "Has at least 2 action items", fn: r => r.action_items?.length >= 2 },
-      { name: "Tom has an action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('tom')) },
-      { name: "Lisa has an action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('lisa')) },
+      { name: "John has an action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('john')) },
+      { name: "Sarah has an action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('sarah')) },
       { name: "Has at least 1 risk", fn: r => r.risks_and_blockers?.length >= 1 },
       { name: "Risk mentions payments", fn: r => r.risks_and_blockers?.some(r => r.risk?.toLowerCase().includes('payment')) },
       { name: "Has at least 1 user need", fn: r => r.user_needs?.length >= 1 },
