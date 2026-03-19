@@ -1,0 +1,111 @@
+Create a new folder called /evals in the root of the project.
+
+Create these files:
+
+1. evals/test-cases.js — 5 test transcripts:
+
+export const testCases = [
+  {
+    id: "T1-clean-stakeholder",
+    description: "Clean stakeholder review — clear decisions, named owners, explicit risks",
+    transcript: `Sarah (PM): Ok everyone, let's confirm what we agreed. We are moving the launch date to Q3, that's decided.
+Tom (Eng): Confirmed. I'll update the technical roadmap by Friday.
+Sarah: The pricing page also needs updating. Lisa, can you own that?
+Lisa (Marketing): Yes, I'll have it done by end of next week.
+Sarah: Main risks — we're blocked on the payments API from the external vendor. That's high priority.
+Tom: Agreed. I'll chase them today and report back Thursday.
+Sarah: We also heard from users in last week's research that the onboarding flow is too complex and they drop off at step 3.
+Lisa: Yes, three separate users said quote the setup takes way too long unquote.`,
+    checks: [
+      { name: "Has at least 1 decision", fn: r => r.decisions?.length >= 1 },
+      { name: "Decision mentions Q3", fn: r => r.decisions?.some(d => d.decision?.toLowerCase().includes('q3')) },
+      { name: "Has at least 2 action items", fn: r => r.action_items?.length >= 2 },
+      { name: "Tom has an action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('tom')) },
+      { name: "Lisa has an action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('lisa')) },
+      { name: "Has at least 1 risk", fn: r => r.risks_and_blockers?.length >= 1 },
+      { name: "Risk mentions payments", fn: r => r.risks_and_blockers?.some(r => r.risk?.toLowerCase().includes('payment')) },
+      { name: "Has at least 1 user need", fn: r => r.user_needs?.length >= 1 },
+      { name: "User need has source quote", fn: r => r.user_needs?.some(u => u.source_quote?.length > 5) },
+      { name: "Confidence is high", fn: r => r.confidence === 'high' },
+    ]
+  },
+  {
+    id: "T2-user-interview",
+    description: "User interview — heavy on user needs, minimal decisions",
+    transcript: `Interviewer: Tell me about your experience with the current dashboard.
+User: Honestly it's overwhelming. There are too many options and I never know where to start.
+Interviewer: What do you do when you first log in?
+User: I just stare at it for a bit. I wish there was like a getting started guide or something.
+Interviewer: Have you used the reporting feature?
+User: I tried once but gave up. The filters are really confusing and I couldn't figure out how to export.
+Interviewer: What would make it better?
+User: Simpler navigation. Like just show me the three things I actually need. And please fix the export — that's the biggest pain point for me.
+Interviewer: We're going to prioritise the export fix based on this feedback.`,
+    checks: [
+      { name: "Has at least 3 user needs", fn: r => r.user_needs?.length >= 3 },
+      { name: "User needs have source quotes", fn: r => r.user_needs?.every(u => u.source_quote?.length > 5) },
+      { name: "No invented action items without owner", fn: r => !r.action_items?.some(a => !a.owner) },
+      { name: "Has at least 1 decision", fn: r => r.decisions?.length >= 1 },
+      { name: "No hallucinated risks", fn: r => r.risks_and_blockers?.length <= 2 },
+    ]
+  },
+  {
+    id: "T3-messy-standup",
+    description: "Messy standup — incomplete sentences, vague commitments, no clear owners",
+    transcript: `Dev 1: Yeah so I'm still on the auth thing. Should be done... soon.
+Dev 2: Same, working on the API stuff. Bit blocked.
+Manager: Blocked on what?
+Dev 2: Just some weird edge cases. Will sort it.
+Dev 1: Oh also the staging environment is broken again.
+Manager: Someone needs to fix that.
+Dev 2: Yeah.
+Manager: Ok let's keep moving. Everyone know what they're doing?
+Dev 1: Yep.
+Dev 2: Sure.`,
+    checks: [
+      { name: "Unassigned items use Unassigned label", fn: r => !r.action_items?.some(a => a.owner === '' || a.owner === null) },
+      { name: "Staging issue captured as risk or action", fn: r => 
+        r.risks_and_blockers?.some(r => r.risk?.toLowerCase().includes('staging')) ||
+        r.action_items?.some(a => a.task?.toLowerCase().includes('staging')) },
+      { name: "Confidence is not high", fn: r => r.confidence !== 'high' },
+      { name: "No fabricated decisions", fn: r => r.decisions?.length <= 1 },
+    ]
+  },
+  {
+    id: "T4-design-review",
+    description: "Design review with disagreements — tests risk vs decision classification",
+    transcript: `Designer: I'm proposing we move to a single column layout on mobile.
+Engineer: I have concerns about that. It'll double our dev time.
+PM: How long are we talking?
+Engineer: At least 3 sprints. Maybe 4.
+Designer: I think it's worth it for the user experience.
+PM: I don't think we can commit to that timeline right now.
+Designer: Can we at least agree to do a prototype?
+PM: Yes, let's agree to prototype only. No full build commitment yet.
+Engineer: Fine with me but I want it on record that the timeline risk is real.
+PM: Noted. Lisa will run the prototype sprint starting next Monday.`,
+    checks: [
+      { name: "Prototype decision captured", fn: r => r.decisions?.some(d => d.decision?.toLowerCase().includes('prototype')) },
+      { name: "Timeline risk captured", fn: r => r.risks_and_blockers?.some(r => r.risk?.toLowerCase().includes('timeline') || r.risk?.toLowerCase().includes('sprint')) },
+      { name: "Lisa has action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('lisa')) },
+      { name: "Full build not marked as decision", fn: r => !r.decisions?.some(d => d.decision?.toLowerCase().includes('full build')) },
+      { name: "Has at least 1 risk", fn: r => r.risks_and_blockers?.length >= 1 },
+    ]
+  },
+  {
+    id: "T5-voice-note",
+    description: "Single speaker voice note — tests solo monologue extraction",
+    transcript: `Ok so just recording some notes after the call with the client. They've confirmed budget approval for phase one, that's great news. Main thing to do is send them the SOW by Wednesday — I'll handle that. Also need to loop in the legal team before we sign anything, that's a dependency we can't skip. Client mentioned they're worried about data residency, specifically they need everything hosted in the EU. That's going to affect our infrastructure choices. I'll flag that to the tech team today.`,
+    checks: [
+      { name: "Budget approval captured as decision", fn: r => r.decisions?.some(d => d.decision?.toLowerCase().includes('budget') || d.decision?.toLowerCase().includes('phase')) },
+      { name: "SOW action item captured", fn: r => r.action_items?.some(a => a.task?.toLowerCase().includes('sow') || a.task?.toLowerCase().includes('statement of work')) },
+      { name: "Legal dependency captured", fn: r => 
+        r.risks_and_blockers?.some(r => r.risk?.toLowerCase().includes('legal')) ||
+        r.action_items?.some(a => a.task?.toLowerCase().includes('legal')) },
+      { name: "EU data residency captured as risk or need", fn: r =>
+        r.risks_and_blockers?.some(r => r.risk?.toLowerCase().includes('eu') || r.risk?.toLowerCase().includes('data residency')) ||
+        r.user_needs?.some(u => u.need?.toLowerCase().includes('eu') || u.need?.toLowerCase().includes('data')) },
+      { name: "Has at least 2 action items", fn: r => r.action_items?.length >= 2 },
+    ]
+  }
+]
