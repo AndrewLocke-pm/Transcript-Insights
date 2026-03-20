@@ -1,0 +1,31 @@
+Add a new test case T6 to evals/test-cases.js:
+
+{
+  id: "T6-mining-client-debrief",
+  description: "Real-world mining sector client debrief — tests complex multi-owner action items and procurement risk",
+  transcript: `Just wrapped up a meeting with Thabo, the Electrical Superintendent at Karee Ridge Platinum Mine outside Rustenburg. They're currently experiencing reliability issues with their backup power systems, especially during load shedding where switchover delays are causing brief outages on critical equipment.
+There's strong interest in a more robust, integrated solution — specifically inverter and battery backup with faster failover and better load management. Budget is available, but procurement will require a detailed technical proposal and full compliance documentation before moving forward.
+Feedback from the client was pretty direct — they've had issues with previous suppliers overpromising on uptime and underdelivering on support. Reliability and after-sales service will be key to winning this deal.
+The main risk is the approval process — it's likely to move slowly due to internal procurement and safety sign-offs, and they've confirmed they're already engaging with two other vendors.
+Action items from my side are to send through a high-level solution proposal with system architecture and expected uptime improvements by Friday, and to set up a technical deep dive with their engineering team early next week.
+Tasks:
+Johan to scope system design and confirm sizing based on their load profile
+Priya to prepare compliance and certification documentation aligned to mining standards
+Kabelo to draft the commercial proposal and pricing structure
+I'll keep momentum on this and follow up early next week once they've reviewed the proposal.`,
+  checks: [
+    { name: "Has at least 1 decision", fn: r => r.decisions?.length >= 1 },
+    { name: "Johan has action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('johan')) },
+    { name: "Priya has action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('priya')) },
+    { name: "Kabelo has action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('kabelo')) },
+    { name: "Has at least 3 action items", fn: r => r.action_items?.length >= 3 },
+    { name: "Procurement risk captured", fn: r => r.risks_and_blockers?.some(r => r.risk?.toLowerCase().includes('procurement') || r.risk?.toLowerCase().includes('approval')) },
+    { name: "Competitor risk captured", fn: r => r.risks_and_blockers?.some(r => r.risk?.toLowerCase().includes('vendor') || r.risk?.toLowerCase().includes('competitor') || r.risk?.toLowerCase().includes('engaging')) },
+    { name: "Has at least 2 risks", fn: r => r.risks_and_blockers?.length >= 2 },
+    { name: "Reliability user need captured", fn: r => r.user_needs?.some(u => u.need?.toLowerCase().includes('reliab') || u.need?.toLowerCase().includes('support') || u.need?.toLowerCase().includes('service')) },
+    { name: "Confidence is not low", fn: r => r.confidence !== 'low' },
+  ]
+}
+
+Update the total check count in any comments if needed.
+After adding, run the evals to confirm the new score.
