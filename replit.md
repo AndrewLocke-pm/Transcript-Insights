@@ -1,107 +1,93 @@
-# Workspace
+# Transcript Insights API
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+Standalone Express.js backend API that transcribes audio and analyses meeting transcripts using OpenAI and Anthropic. No frontend. No monorepo.
 
 ## Stack
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Runtime**: Node.js 24 (ESM — `"type": "module"`)
+- **Framework**: Express 5
+- **Transcription**: OpenAI Whisper (`whisper-1`)
+- **Analysis**: Anthropic Claude (`claude-sonnet-4-6`, max_tokens 4096)
+- **File uploads**: Multer (multipart/form-data)
+- **Package manager**: npm (standalone, no pnpm workspace)
 
-## Structure
+## Project Structure
 
 ```text
-artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+transcript-insights-api/
+├── index.js          # Main server — all routes and logic
+└── package.json      # Dependencies: express, multer, openai, @anthropic-ai/sdk
+
+evals/
+├── test-cases.js     # 6 test transcripts with assertion checks
+├── run.js            # Eval runner — posts to /analyse and reports pass/fail
+└── package.json      # { "type": "module" }
 ```
 
-## TypeScript & Composite Projects
+## API Endpoints
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+All endpoints are at the root path (no `/api` prefix):
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+- `GET /health` — Returns `{ status: "ok", timestamp }`
+- `POST /transcribe` — Accepts `multipart/form-data` with field `audio` (max 25 MB). Sends to Whisper. Returns `{ transcript: string }`.
+- `POST /analyse` — Accepts JSON `{ transcript: string }`. Sends to Claude. Returns structured JSON insights object.
+- `POST /process-audio` — Accepts `multipart/form-data` with field `audio`. Chains transcribe → analyse. Returns `{ transcript, insights }`.
 
-## Root Scripts
+## Analyse Response Schema
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+```json
+{
+  "meeting_type": "string",
+  "decisions": [{ "decision": "string", "context": "string" }],
+  "action_items": [{ "task": "string", "owner": "string", "due_date": "string" }],
+  "risks_and_blockers": [{ "risk": "string", "severity": "high|medium|low" }],
+  "user_needs": [{ "need": "string", "source_quote": "string" }],
+  "confidence": "high|medium|low",
+  "summary": "string"
+}
+```
 
-## API Endpoints (transcript-insights-api)
+## Environment Secrets
 
-All endpoints are mounted under `/api`:
+Both must be set in Replit Secrets:
 
-- `GET /api/health` — Returns `{ status: "ok" }`
-- `POST /api/transcribe` — Accepts multipart/form-data with field `audio` (max 25MB). Sends to OpenAI Whisper (`whisper-1`). Returns `{ transcript: string }`.
-- `POST /api/analyse` — Accepts JSON `{ transcript: string }`. Sends to Anthropic Claude (`claude-sonnet-4-5`, max_tokens 2000) with a product intelligence system prompt. Returns parsed JSON insights object.
-- `POST /api/process-audio` — Accepts multipart/form-data with field `audio`. Chains transcription then analysis. Returns `{ transcript: string, insights: object }`.
+- `OPENAI_API_KEY`
+- `ANTHROPIC_API_KEY`
 
-Requires env secrets: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`.
+The server checks for both on startup and exits with an error if either is missing.
 
-## Packages
+## Running Locally
 
-### `artifacts/api-server` (`@workspace/api-server`)
+The dev workflow runs: `cd transcript-insights-api && PORT=3001 node index.js`
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+Server listens on `PORT` env var, defaulting to `8080` (production uses 8080).
 
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+## Deployment
 
-### `lib/db` (`@workspace/db`)
+- **Target**: Replit Autoscale
+- **Run command**: `cd transcript-insights-api && node index.js`
+- **Port mapping**: external port 80 → local port 8080
+- **Production URL**: `https://transcript-insights-andrew616.replit.app`
 
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
+## Evals
 
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
+Run against local server (default):
+```bash
+node evals/run.js
+```
 
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
+Run against production:
+```bash
+API_URL=https://transcript-insights-andrew616.replit.app node evals/run.js
+```
 
-### `lib/api-spec` (`@workspace/api-spec`)
+6 test cases covering: clean stakeholder review, user interview, messy standup, design review with disagreements, solo voice note, and real-world mining client debrief.
 
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
+## Key Implementation Details
 
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+- Multer temp files are renamed with the correct extension (`.webm`, `.mp4`, etc.) before being sent to Whisper — the OpenAI SDK requires the file extension to set the correct MIME type
+- `extractJSON()` helper strips ` ```json ` fences from Claude responses before parsing
+- System prompt instructs Claude to return only raw JSON with no markdown
+- File is deleted from disk after transcription whether or not the request succeeds
