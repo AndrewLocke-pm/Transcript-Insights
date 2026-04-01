@@ -96,23 +96,23 @@ PM: Noted. Lisa will run the prototype sprint starting next Monday.`,
     ]
   },
   {
-    id: "T6-mining-client-debrief",
-    description: "Real-world mining sector client debrief — tests complex multi-owner action items and procurement risk",
-    transcript: `Just wrapped up a meeting with Thabo, the Electrical Superintendent at Karee Ridge Platinum Mine outside Rustenburg. They're currently experiencing reliability issues with their backup power systems, especially during load shedding where switchover delays are causing brief outages on critical equipment.
-There's strong interest in a more robust, integrated solution — specifically inverter and battery backup with faster failover and better load management. Budget is available, but procurement will require a detailed technical proposal and full compliance documentation before moving forward.
-Feedback from the client was pretty direct — they've had issues with previous suppliers overpromising on uptime and underdelivering on support. Reliability and after-sales service will be key to winning this deal.
-The main risk is the approval process — it's likely to move slowly due to internal procurement and safety sign-offs, and they've confirmed they're already engaging with two other vendors.
-Action items from my side are to send through a high-level solution proposal with system architecture and expected uptime improvements by Friday, and to set up a technical deep dive with their engineering team early next week.
-Tasks:
-Johan to scope system design and confirm sizing based on their load profile
-Priya to prepare compliance and certification documentation aligned to mining standards
-Kabelo to draft the commercial proposal and pricing structure
-I'll keep momentum on this and follow up early next week once they've reviewed the proposal.`,
+    id: "T6-extraction-client-debrief",
+    description: "Synthetic extraction sector client debrief — tests complex multi-owner action items and procurement risk",
+    transcript: `Just wrapped up a meeting with Darius, the Operations Director at Ferrum Peak Resources, based out of their Greystone processing facility. They're having ongoing reliability issues with their backup power infrastructure — during grid outages, switchover delays are long enough to cause brief interruptions on critical processing equipment, which is costing them.
+There's real appetite for a more integrated solution — faster failover, inverter-backed power with smarter load distribution. Budget has been signed off at their level, but procurement requires a full technical proposal and compliance documentation before anything can go to approval.
+The client was candid about their past experience — previous vendors made big promises on uptime and then disappeared when things went wrong. After-sales support and demonstrated reliability are going to be the deciding factors here.
+The main risk on the timeline is their internal approval process — procurement and safety sign-offs at Ferrum Peak are known to move slowly, and Darius mentioned they're already in conversations with two other vendors.
+From our side, I've committed to getting them a high-level solution proposal with system architecture and projected uptime gains by Friday. I'll also set up a technical deep dive with their engineering team early next week.
+Internal tasks:
+Sven to scope the system design and confirm sizing against their load profile
+Amara to prepare compliance and certification documentation aligned to heavy industry standards
+Luca to draft the commercial proposal and pricing structure
+I'll follow up early next week once they've had a chance to review.`,
     checks: [
       { name: "Has at least 1 decision", fn: r => r.decisions?.length >= 1 },
-      { name: "Johan has action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('johan')) },
-      { name: "Priya has action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('priya')) },
-      { name: "Kabelo has action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('kabelo')) },
+      { name: "Sven has action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('sven')) },
+      { name: "Amara has action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('amara')) },
+      { name: "Luca has action item", fn: r => r.action_items?.some(a => a.owner?.toLowerCase().includes('luca')) },
       { name: "Has at least 3 action items", fn: r => r.action_items?.length >= 3 },
       { name: "Procurement risk captured", fn: r => r.risks_and_blockers?.some(r => r.risk?.toLowerCase().includes('procurement') || r.risk?.toLowerCase().includes('approval')) },
       { name: "Competitor risk captured", fn: r => r.risks_and_blockers?.some(r => r.risk?.toLowerCase().includes('vendor') || r.risk?.toLowerCase().includes('competitor') || r.risk?.toLowerCase().includes('engaging')) },

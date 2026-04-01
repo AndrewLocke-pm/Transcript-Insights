@@ -1,0 +1,46 @@
+Rewrite this test case for an eval harness. Keep the exact same structure, 
+complexity, and checks. Replace all real-world details with fully synthetic 
+equivalents — fictional company name, fictional location, fictional names for 
+all people mentioned. Keep it realistic but unidentifiable. Do not reference 
+any real mining companies, real places, or real people.
+
+Keep the same scenario type: a post-meeting voice note debrief covering a 
+complex B2B sales situation with multiple internal owners, procurement risk, 
+and a competitor threat.
+
+Here is the original to rewrite:
+
+{
+    id: "T6-mining-client-debrief",
+    description: "Real-world mining sector client debrief — tests complex 
+    multi-owner action items and procurement risk",
+    transcript: `Just wrapped up a meeting with Thabo, the Electrical 
+    Superintendent at Karee Ridge Platinum Mine outside Rustenburg. They're 
+    currently experiencing reliability issues with their backup power systems, 
+    especially during load shedding where switchover delays are causing brief 
+    outages on critical equipment.
+    There's strong interest in a more robust, integrated solution — specifically 
+    inverter and battery backup with faster failover and better load management. 
+    Budget is available, but procurement will require a detailed technical 
+    proposal and full compliance documentation before moving forward.
+    Feedback from the client was pretty direct — they've had issues with previous 
+    suppliers overpromising on uptime and underdelivering on support. Reliability 
+    and after-sales service will be key to winning this deal.
+    The main risk is the approval process — it's likely to move slowly due to 
+    internal procurement and safety sign-offs, and they've confirmed they're 
+    already engaging with two other vendors.
+    Action items from my side are to send through a high-level solution proposal 
+    with system architecture and expected uptime improvements by Friday, and to 
+    set up a technical deep dive with their engineering team early next week.
+    Tasks:
+    Johan to scope system design and confirm sizing based on their load profile
+    Priya to prepare compliance and certification documentation aligned to mining 
+    standards
+    Kabelo to draft the commercial proposal and pricing structure
+    I'll keep momentum on this and follow up early next week once they've reviewed 
+    the proposal.`,
+    checks: [... keep all existing checks exactly as they are ...]
+}
+
+Return only the rewritten test case object, ready to drop into the existing 
+testCases array. Keep the id and description updated to reflect the new scenario.
